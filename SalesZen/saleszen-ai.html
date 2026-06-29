@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesZen AI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:       #ffffff;
+  --surface:  #ffffff;
+  --surface2: #fdf6f6;
+  --surface3: #fff0f0;
+  --border:   #d4909f;
+  --border2:  #c47a8a;
+  --pink:     #e8849a;
+  --pink-d:   #c9637a;
+  --blush:    #d4a0ac;
+  --mint:     #D5F3D8;
+  --mint-d:   #6aab72;
+  --white:    #FFFFFF;
+  --text:     #3a2a2a;
+  --text2:    #7a5060;
+  --text3:    #b08090;
+  --success:  #5cb85c;
+  --warning:  #e0943a;
+  --danger:   #d9534f;
+  --accent:   #e8849a;
+  --radius:   10px;
+  --font:     'Inter', sans-serif;
+  --shadow:   0 2px 12px rgba(242,199,199,0.25);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; display:flex; flex-direction:column; }
+
+/* NAV */
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:13px 24px;
+  background:var(--white);
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:100;
+  box-shadow:var(--shadow);
+}
+.logo { font-size:1.05rem; font-weight:700; display:flex; align-items:center; gap:8px; color:var(--text); }
+.logo-dot { width:9px; height:9px; border-radius:50%; background:var(--pink); box-shadow:0 0 6px var(--pink); }
+.nav-tabs { display:flex; gap:3px; }
+.tab-btn {
+  padding:7px 15px; border-radius:7px; border:none;
+  background:transparent; color:var(--text2);
+  font-family:var(--font); font-size:0.82rem; font-weight:500;
+  cursor:pointer; transition:all 0.18s;
+}
+.tab-btn:hover { background:var(--surface3); color:var(--text); }
+.tab-btn.active { background:var(--pink); color:var(--white); font-weight:600; }
+.online-pill { display:flex; align-items:center; gap:6px; font-size:0.73rem; color:var(--text2); }
+.online-dot { width:7px; height:7px; border-radius:50%; background:var(--success); animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* LAYOUT */
+.app { display:flex; flex:1; height:calc(100vh - 51px); overflow:hidden; }
+.page { display:none; flex:1; overflow-y:auto; flex-direction:column; }
+.page.active { display:flex; }
+
+/* ── CHAT PAGE ── */
+.chat-header {
+  padding:15px 22px; border-bottom:1px solid var(--border);
+  background:var(--white); display:flex; align-items:center; gap:12px; flex-shrink:0;
+  box-shadow:var(--shadow);
+}
+.bot-avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,var(--pink),var(--blush));
+  display:flex; align-items:center; justify-content:center; font-size:1.1rem;
+  box-shadow:0 2px 8px rgba(255,183,197,0.4);
+}
+.bot-info h3 { font-size:0.88rem; font-weight:600; color:var(--text); }
+.bot-info p  { font-size:0.7rem; color:var(--text2); }
+.chat-action-btn {
+  padding:6px 13px; border-radius:20px;
+  border:1px solid var(--border); background:var(--white);
+  color:var(--text2); font-size:0.77rem; cursor:pointer; transition:all .15s;
+}
+.chat-action-btn:hover { border-color:var(--pink); color:var(--pink); background:var(--surface3); }
+.ml-auto { margin-left:auto; }
+
+.chat-messages {
+  flex:1; overflow-y:auto; padding:20px 22px;
+  display:flex; flex-direction:column; gap:13px;
+  background:var(--surface2);
+}
+.chat-messages::-webkit-scrollbar { width:3px; }
+.chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+.msg { display:flex; gap:9px; max-width:76%; animation:fadeUp .22s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { align-self:flex-end; flex-direction:row-reverse; }
+.msg-av {
+  width:30px; height:30px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:0.8rem;
+}
+.msg.bot  .msg-av { background:linear-gradient(135deg,var(--pink),var(--blush)); font-size:0.9rem; box-shadow:0 1px 5px rgba(255,183,197,0.35); }
+.msg.user .msg-av { background:var(--mint); border:1px solid var(--mint-d); color:var(--text); font-weight:600; font-size:0.72rem; }
+.bubble { padding:11px 14px; border-radius:16px; font-size:0.85rem; line-height:1.6; }
+.msg.bot  .bubble { background:var(--white); border:1px solid var(--border); border-radius:4px 16px 16px 16px; color:var(--text); box-shadow:0 1px 6px rgba(242,199,199,0.2); }
+.msg.user .bubble { background:linear-gradient(135deg,var(--pink),var(--pink-d)); border-radius:16px 4px 16px 16px; color:var(--white); box-shadow:0 2px 8px rgba(255,183,197,0.4); }
+.msg-time { font-size:0.63rem; color:var(--text3); margin-top:4px; }
+.msg.user .msg-time { text-align:right; }
+
+.typing { display:flex; gap:4px; padding:11px 14px; }
+.t-dot { width:6px; height:6px; border-radius:50%; background:var(--border); animation:bounce 1.2s infinite; }
+.t-dot:nth-child(2){animation-delay:.2s} .t-dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px);background:var(--pink);} }
+
+.chips { padding:10px 22px; display:flex; gap:7px; flex-wrap:wrap; flex-shrink:0; background:var(--white); border-top:1px solid var(--border); }
+.chip {
+  padding:5px 14px; border-radius:20px;
+  border:1px solid var(--border); background:var(--white);
+  color:var(--text2); font-size:0.76rem; cursor:pointer; transition:all .15s;
+}
+.chip:hover { border-color:var(--pink); color:var(--pink); background:var(--surface3); }
+
+.input-area {
+  padding:12px 22px 16px; background:var(--white);
+  border-top:1px solid var(--border); flex-shrink:0;
+}
+.input-row { display:flex; gap:9px; align-items:flex-end; }
+#chatInput {
+  flex:1; background:var(--surface2); border:1px solid var(--border);
+  border-radius:20px; color:var(--text); font-family:var(--font);
+  font-size:0.85rem; padding:10px 16px; resize:none;
+  min-height:43px; max-height:110px; outline:none; transition:border-color .2s; line-height:1.5;
+}
+#chatInput:focus { border-color:var(--pink); background:var(--white); }
+#chatInput::placeholder { color:var(--text3); }
+.send-btn {
+  width:43px; height:43px; border-radius:50%; border:none;
+  background:linear-gradient(135deg,var(--pink),var(--pink-d));
+  color:var(--white); font-size:1rem;
+  cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  box-shadow:0 2px 8px rgba(255,183,197,0.5);
+}
+.send-btn:hover { transform:scale(1.08); box-shadow:0 4px 14px rgba(255,183,197,0.6); }
+.send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+/* ── DASHBOARD & INNER PAGES ── */
+.inner { padding:22px; display:flex; flex-direction:column; gap:18px; background:var(--surface2); min-height:100%; }
+.ph { display:flex; justify-content:space-between; align-items:center; }
+.pt { font-size:1.2rem; font-weight:700; color:var(--text); }
+.ps { font-size:0.76rem; color:var(--text2); margin-top:3px; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; }
+.sc {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:var(--radius); padding:17px;
+  border-top:3px solid var(--pink);
+  box-shadow:var(--shadow);
+}
+.sc-icon { font-size:1.3rem; margin-bottom:9px; }
+.sc-val { font-size:1.65rem; font-weight:700; line-height:1; margin-bottom:3px; color:var(--text); }
+.sc-label { font-size:0.7rem; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
+.sc-change { font-size:0.68rem; margin-top:6px; padding:2px 8px; border-radius:10px; display:inline-block; }
+.up   { background:rgba(92,184,92,.1); color:var(--success); }
+.down { background:rgba(217,83,79,.1); color:var(--danger); }
+
+.row2 { display:grid; grid-template-columns:1.5fr 1fr; gap:13px; }
+.card {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:var(--radius); padding:17px;
+  box-shadow:var(--shadow);
+}
+.card h3 { font-size:0.78rem; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:13px; }
+
+.bar-chart { display:flex; align-items:flex-end; gap:6px; height:105px; }
+.bw { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; }
+.bar { width:100%; border-radius:5px 5px 0 0; background:linear-gradient(180deg,var(--pink),var(--blush)); transition:height .7s ease; min-height:5px; cursor:pointer; }
+.bar:hover { background:linear-gradient(180deg,var(--mint-d),var(--mint)); }
+.bl { font-size:0.6rem; color:var(--text3); }
+.bv { font-size:0.65rem; font-weight:600; color:var(--text2); }
+
+.donut-wrap { display:flex; flex-direction:column; align-items:center; gap:13px; }
+.donut-svg { width:105px; height:105px; }
+.d-legend { display:flex; flex-direction:column; gap:7px; width:100%; }
+.li { display:flex; align-items:center; gap:7px; font-size:0.75rem; }
+.ld { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.ln { flex:1; color:var(--text2); }
+.lv { font-weight:600; color:var(--text); }
+
+.leads-tbl { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+.tbl-head { padding:14px 17px 11px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.tbl-head h3 { font-size:0.85rem; font-weight:600; color:var(--text); }
+.tbl-head span { font-size:0.7rem; color:var(--text2); }
+table { width:100%; border-collapse:collapse; }
+thead th { padding:8px 15px; text-align:left; font-size:0.65rem; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); background:var(--surface2); }
+tbody tr { border-bottom:1px solid var(--border); transition:background .15s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--surface3); }
+tbody td { padding:10px 15px; font-size:0.79rem; }
+.tn { font-weight:600; color:var(--text); }
+.te { color:var(--text2); }
+.sbadge { padding:3px 9px; border-radius:12px; font-size:0.65rem; font-weight:600; }
+.s-hot  { background:rgba(224,148,58,.12); color:var(--warning); }
+.s-warm { background:rgba(255,183,197,.25); color:#c06070; }
+.s-cold { background:rgba(213,243,216,.5); color:#4a8a50; }
+.s-converted { background:rgba(92,184,92,.12); color:var(--success); }
+
+.row3 { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+.activity-list { display:flex; flex-direction:column; }
+.ai { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:0.79rem; }
+.ai:last-child { border-bottom:none; }
+.ai-ic { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.78rem; flex-shrink:0; background:var(--surface3); }
+.ai-tx { flex:1; }
+.ai-tx strong { color:var(--text); display:block; font-size:0.79rem; }
+.ai-tx p { color:var(--text2); font-size:0.7rem; margin-top:1px; }
+.ai-tm { font-size:0.65rem; color:var(--text3); flex-shrink:0; }
+
+.intent-bars { display:flex; flex-direction:column; gap:10px; }
+.ib-meta { display:flex; justify-content:space-between; font-size:0.72rem; margin-bottom:4px; }
+.ib-meta span:first-child { color:var(--text2); }
+.ib-meta span:last-child  { font-weight:600; color:var(--text); }
+.ib-track { height:6px; background:var(--surface3); border-radius:3px; }
+.ib-fill  { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--pink),var(--blush)); transition:width .8s ease; }
+
+/* ── LEADS ── */
+.toolbar { display:flex; gap:7px; flex-wrap:wrap; align-items:center; }
+.sw { position:relative; flex:1; min-width:180px; }
+.sw::before { content:'🔍'; position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:0.73rem; pointer-events:none; }
+.search-in {
+  width:100%; background:var(--white); border:1px solid var(--border);
+  border-radius:20px; color:var(--text); font-family:var(--font);
+  font-size:0.82rem; padding:8px 12px 8px 32px; outline:none; transition:border-color .2s;
+}
+.search-in:focus { border-color:var(--pink); }
+.fb {
+  padding:7px 14px; background:var(--white); border:1px solid var(--border);
+  border-radius:20px; color:var(--text2); font-size:0.79rem; cursor:pointer; transition:all .15s;
+}
+.fb:hover, .fb.active { border-color:var(--pink); color:var(--pink); background:var(--surface3); }
+
+.lead-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(255px,1fr)); gap:11px; }
+.lc {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; cursor:pointer; transition:all .2s;
+  box-shadow:var(--shadow);
+}
+.lc:hover { border-color:var(--pink); transform:translateY(-2px); box-shadow:0 6px 20px rgba(255,183,197,0.25); }
+.lc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+.lc-name { font-weight:600; font-size:0.88rem; color:var(--text); margin-bottom:2px; }
+.lc-email { font-size:0.7rem; color:var(--text2); }
+.lc-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:7px; }
+.tag { padding:3px 9px; border-radius:12px; font-size:0.67rem; background:var(--surface3); color:var(--text2); }
+.lc-foot { display:flex; justify-content:space-between; align-items:center; margin-top:11px; padding-top:10px; border-top:1px solid var(--border); font-size:0.7rem; }
+.score-v { font-weight:700; color:var(--pink-d); }
+
+/* ── SETTINGS ── */
+.sg { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+.scard { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); }
+.scard h3 { font-size:0.78rem; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:13px; }
+.srow { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); }
+.srow:last-child { border-bottom:none; }
+.slabel { font-size:0.82rem; color:var(--text); }
+.sdesc  { font-size:0.68rem; color:var(--text2); margin-top:2px; }
+.toggle { width:37px; height:20px; border-radius:10px; background:var(--border2); border:none; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle::after { content:''; position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; top:3px; left:3px; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.toggle.on { background:var(--pink); }
+.toggle.on::after { transform:translateX(17px); }
+.sin { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font); font-size:0.82rem; padding:8px 11px; outline:none; transition:border-color .2s; margin-top:6px; }
+.sin:focus { border-color:var(--pink); }
+
+/* BUTTONS */
+.btn-p { padding:8px 18px; background:var(--pink); color:var(--white); border:none; border-radius:20px; font-family:var(--font); font-size:0.82rem; font-weight:600; cursor:pointer; transition:all .15s; box-shadow:0 2px 8px rgba(255,183,197,.4); }
+.btn-p:hover { background:var(--pink-d); transform:translateY(-1px); }
+.btn-s { padding:7px 14px; background:var(--white); border:1px solid var(--border); border-radius:20px; color:var(--text2); font-size:0.79rem; cursor:pointer; transition:all .15s; }
+.btn-s:hover { border-color:var(--pink); color:var(--pink); }
+
+/* MODAL */
+.modal-ov { display:none; position:fixed; inset:0; background:rgba(200,160,160,0.25); backdrop-filter:blur(6px); z-index:1000; align-items:center; justify-content:center; }
+.modal-ov.show { display:flex; }
+.modal { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:26px; width:390px; max-width:90vw; animation:fadeUp .25s ease; box-shadow:0 12px 40px rgba(242,199,199,.4); }
+.modal h2 { font-size:1.05rem; font-weight:700; margin-bottom:5px; color:var(--text); }
+.modal p  { font-size:0.76rem; color:var(--text2); margin-bottom:18px; }
+.fg { margin-bottom:11px; }
+.fg label { display:block; font-size:0.7rem; font-weight:600; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.fg input, .fg select { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--font); font-size:0.82rem; padding:8px 11px; outline:none; transition:border-color .2s; }
+.fg input:focus, .fg select:focus { border-color:var(--pink); }
+.modal-btns { display:flex; gap:8px; margin-top:16px; }
+
+.empty { text-align:center; padding:36px; color:var(--text3); }
+.empty div { font-size:1.8rem; margin-bottom:9px; }
+.empty p { font-size:0.84rem; color:var(--text2); }
+
+@media(max-width:900px){
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .row2,.row3,.sg { grid-template-columns:1fr; }
+}
+@media(max-width:600px){
+  nav { padding:10px 14px; }
+  .tab-btn { padding:6px 9px; font-size:0.74rem; }
+  .inner { padding:13px; }
+  .chat-messages { padding:14px; }
+  .input-area { padding:10px 14px 14px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><div class="logo-dot"></div>SalesZen AI</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showPage('chat',this)">💬 Chat</button>
+    <button class="tab-btn" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showPage('leads',this)">👥 Leads</button>
+    <button class="tab-btn" onclick="showPage('settings',this)">⚙️ Settings</button>
+  </div>
+  <div class="online-pill"><div class="online-dot"></div>AI Online</div>
+</nav>
+
+<div class="app">
+
+  <!-- CHAT -->
+  <div id="page-chat" class="page active">
+    <div class="chat-header">
+      <div class="bot-avatar">🤖</div>
+      <div class="bot-info">
+        <h3>SalesZen Assistant</h3>
+        <p>Powered by Claude AI · Sales Intelligence</p>
+      </div>
+      <button class="chat-action-btn ml-auto" onclick="showLeadModal()">+ Capture Lead</button>
+      <button class="chat-action-btn" style="margin-left:6px;" onclick="clearChat()">🗑 Clear</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chips" id="chips">
+      <div class="chip" onclick="sendChip(this)">💼 Tell me about your products</div>
+      <div class="chip" onclick="sendChip(this)">💰 What's your pricing?</div>
+      <div class="chip" onclick="sendChip(this)">🚀 How can AI help my business?</div>
+      <div class="chip" onclick="sendChip(this)">📞 Book a demo</div>
+      <div class="chip" onclick="sendChip(this)">🔥 Current offers?</div>
+    </div>
+    <div class="input-area">
+      <div class="input-row">
+        <textarea id="chatInput" placeholder="Ask about products, pricing, demos..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page">
+    <div class="inner">
+      <div class="ph">
+        <div><div class="pt">Dashboard</div><div class="ps">Real-time sales overview</div></div>
+        <button class="btn-p" onclick="refreshDash()">↻ Refresh</button>
+      </div>
+      <div class="stats-grid">
+        <div class="sc"><div class="sc-icon">💬</div><div class="sc-val" id="s-chats">0</div><div class="sc-label">Total Chats</div><div class="sc-change up" id="s-chats-c">↑ 0 sessions</div></div>
+        <div class="sc"><div class="sc-icon">👥</div><div class="sc-val" id="s-leads">0</div><div class="sc-label">Leads Captured</div><div class="sc-change up" id="s-leads-c">↑ 0 captured</div></div>
+        <div class="sc"><div class="sc-icon">🎯</div><div class="sc-val" id="s-conv">0%</div><div class="sc-label">Conversion Rate</div><div class="sc-change up">↑ Live</div></div>
+        <div class="sc"><div class="sc-icon">⭐</div><div class="sc-val">4.8</div><div class="sc-label">Satisfaction</div><div class="sc-change up">Excellent</div></div>
+      </div>
+      <div class="row2">
+        <div class="card">
+          <h3>Weekly Conversations</h3>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="card">
+          <h3>Lead Sources</h3>
+          <div class="donut-wrap">
+            <svg class="donut-svg" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#fdf6f6" stroke-width="16"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#FFB7C5" stroke-width="16" stroke-dasharray="100 151" stroke-dashoffset="0" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#D5F3D8" stroke-width="16" stroke-dasharray="51 200" stroke-dashoffset="-100" transform="rotate(-90 55 55)"/>
+              <circle cx="55" cy="55" r="40" fill="none" stroke="#F2C7C7" stroke-width="16" stroke-dasharray="25 226" stroke-dashoffset="-151" transform="rotate(-90 55 55)"/>
+              <text x="55" y="59" text-anchor="middle" fill="#3a2a2a" font-size="10" font-weight="700" font-family="Inter">Leads</text>
+            </svg>
+            <div class="d-legend">
+              <div class="li"><div class="ld" style="background:#FFB7C5"></div><span class="ln">Chatbot</span><span class="lv">40%</span></div>
+              <div class="li"><div class="ld" style="background:#D5F3D8"></div><span class="ln">Organic</span><span class="lv">20%</span></div>
+              <div class="li"><div class="ld" style="background:#F2C7C7"></div><span class="ln">Referral</span><span class="lv">10%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="card">
+          <h3>Recent Activity</h3>
+          <div class="activity-list" id="actFeed">
+            <div class="ai"><div class="ai-ic">💬</div><div class="ai-tx"><strong>Bot session ready</strong><p>Waiting for first conversation</p></div><div class="ai-tm">now</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Top Intents</h3>
+          <div class="intent-bars" id="intentBars"></div>
+        </div>
+      </div>
+      <div class="leads-tbl">
+        <div class="tbl-head"><h3>Recent Leads</h3><span id="lcount">0 total</span></div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Interest</th><th>Status</th><th>Time</th></tr></thead>
+            <tbody id="tbody"><tr><td colspan="5" style="text-align:center;padding:26px;color:var(--text3);">No leads yet — start chatting!</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADS -->
+  <div id="page-leads" class="page">
+    <div class="inner">
+      <div class="ph">
+        <div><div class="pt">Lead Manager</div><div class="ps">All captured leads</div></div>
+        <button class="btn-p" onclick="showLeadModal()">+ Add Lead</button>
+      </div>
+      <div class="toolbar">
+        <div class="sw"><input class="search-in" id="lsearch" placeholder="Search leads..." oninput="renderCards()"></div>
+        <button class="fb active" onclick="setF('all',this)">All</button>
+        <button class="fb" onclick="setF('hot',this)">🔥 Hot</button>
+        <button class="fb" onclick="setF('warm',this)">☀️ Warm</button>
+        <button class="fb" onclick="setF('converted',this)">✅ Converted</button>
+      </div>
+      <div class="lead-cards" id="lcards"><div class="empty" style="grid-column:1/-1;"><div>👥</div><p>No leads yet.<br>Start chatting to capture leads.</p></div></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="inner">
+      <div><div class="pt">Settings</div><div class="ps">Configure your AI Sales Bot</div></div>
+      <div class="sg">
+        <div class="scard">
+          <h3>🤖 AI Config</h3>
+          <div class="srow"><div><div class="slabel">Model</div><div class="sdesc">Claude Sonnet 4.6</div></div><span style="font-size:.73rem;color:var(--success);font-weight:600;">✓ Live</span></div>
+          <div class="srow"><div><div class="slabel">Lead Detection</div><div class="sdesc">Auto-detect buying intent</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="srow"><div><div class="slabel">Sentiment Analysis</div><div class="sdesc">Detect buyer signals</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="srow"><div><div class="slabel">Smart Follow-up</div><div class="sdesc">AI next-step suggestions</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        </div>
+        <div class="scard">
+          <h3>💬 Chat Settings</h3>
+          <div class="srow"><div><div class="slabel">Quick Chips</div><div class="sdesc">Show suggested questions</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="srow"><div><div class="slabel">Typing Indicator</div><div class="sdesc">Show bot is thinking</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+          <div class="srow"><div><div class="slabel">Auto Lead Prompt</div><div class="sdesc">Prompt for contact info</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        </div>
+        <div class="scard">
+          <h3>🏢 Company Profile</h3>
+          <div><div class="sdesc">Company Name</div><input class="sin" id="cname" value="SalesZen Technologies"></div>
+          <div style="margin-top:10px;"><div class="sdesc">Industry</div><input class="sin" id="cindustry" value="AI & SaaS Solutions"></div>
+          <div style="margin-top:10px;"><div class="sdesc">Products / Services</div><input class="sin" id="cproducts" value="AI CRM, Sales Analytics, Chatbot Platform"></div>
+          <button class="btn-p" style="margin-top:15px;width:100%;" onclick="saveSettings()">Save Settings</button>
+        </div>
+        <div class="scard">
+          <h3>📊 Data</h3>
+          <div class="srow" style="flex-direction:column;align-items:flex-start;gap:4px;">
+            <div><div class="slabel" style="color:var(--pink-d);font-weight:700;">No API key needed</div><div class="sdesc">This chatbot works locally in the app without external keys.</div></div>
+          </div>
+          <div class="srow"><div class="slabel">Total Leads</div><div style="font-weight:700;color:var(--pink-d);" id="set-leads">0</div></div>
+          <div class="srow"><div class="slabel">Messages</div><div style="font-weight:700;color:var(--pink-d);" id="set-msgs">0</div></div>
+          <div class="srow"><div><div class="slabel">Export Leads</div><div class="sdesc">Download as CSV</div></div><button class="btn-s" onclick="exportLeads()">Export</button></div>
+          <div class="srow"><div><div class="slabel">Clear All Data</div></div><button class="btn-s" style="color:var(--danger);border-color:var(--danger);" onclick="clearAll()">Clear</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-ov" id="leadModal">
+  <div class="modal">
+    <h2>🌸 Capture Lead</h2>
+    <p>Save contact to your sales pipeline</p>
+    <div class="fg"><label>Full Name *</label><input id="lname" placeholder="John Doe"></div>
+    <div class="fg"><label>Email *</label><input type="email" id="lemail" placeholder="john@company.com"></div>
+    <div class="fg"><label>Phone</label><input type="tel" id="lphone" placeholder="+91 9999999999"></div>
+    <div class="fg"><label>Interest</label>
+      <select id="linterest">
+        <option>Sales Automation</option><option>AI Chatbot</option>
+        <option>CRM Integration</option><option>Analytics Dashboard</option>
+        <option>Custom Solution</option><option>Pricing Info</option>
+      </select>
+    </div>
+    <div class="fg"><label>Lead Temperature</label>
+      <select id="lstatus">
+        <option value="hot">🔥 Hot — Ready to buy</option>
+        <option value="warm">☀️ Warm — Interested</option>
+        <option value="cold">❄️ Cold — Browsing</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-s" onclick="closeModal()">Cancel</button>
+      <button class="btn-p" style="flex:1;" onclick="saveLead()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={leads:[],history:[],msgs:0,chats:0,busy:false,ap:false};
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  const t=document.getElementById('page-'+id);
+  t.style.display='flex'; t.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(id==='dashboard') refreshDash();
+  if(id==='leads')     renderCards();
+  if(id==='settings')  updateSetCounts();
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  const c=document.getElementById('page-chat');
+  c.style.display='flex'; c.classList.add('active');
+  initWelcome(); refreshDash();
+});
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px';}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function sendChip(c){document.getElementById('chatInput').value=c.textContent.replace(/^.\s/,'').trim();sendMessage();}
+function nowTime(){return new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});}
+function toast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:18px;right:18px;background:#fff;border:1px solid var(--pink);color:var(--text);padding:9px 16px;border-radius:20px;font-size:.8rem;z-index:9999;box-shadow:0 4px 16px rgba(255,183,197,.35);';
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);
+}
+
+function getSys(){
+  const c=document.getElementById('cname')?.value||'SalesZen Technologies';
+  const i=document.getElementById('cindustry')?.value||'AI & SaaS';
+  const p=document.getElementById('cproducts')?.value||'AI CRM, Chatbot, Analytics';
+  return `You are SalesZen, an elite AI sales assistant for ${c} (${i}). Products: ${p}.
+Role: Convert visitors into qualified leads through helpful, consultative selling.
+Personality: Professional, warm, solution-focused. Never pushy.
+- Understand pain points, match solutions, use ROI language
+- Offer demos, free trials, pricing calls
+- Ask qualifying questions: company size, role, timeline, budget
+- When HIGH BUYING INTENT detected (pricing/demo/ROI questions), add [LEAD_SIGNAL]
+Keep replies 2-4 sentences. End with a question. Use emojis sparingly.`;
+}
+
+function addMsg(role,text){
+  const el=document.getElementById('chatMessages');
+  const clean=text.replace('[LEAD_SIGNAL]','').trim();
+  const d=document.createElement('div'); d.className=`msg ${role}`;
+  const av=role==='bot'?'🤖':'U';
+  d.innerHTML=`<div class="msg-av">${av}</div><div><div class="bubble">${clean.replace(/\n/g,'<br>')}</div><div class="msg-time">${nowTime()}</div></div>`;
+  el.appendChild(d); el.scrollTop=el.scrollHeight; S.msgs++;
+  if(text.includes('[LEAD_SIGNAL]')&&!S.ap){S.ap=true;setTimeout(()=>{showLeadModal();S.ap=false;},1200);}
+  updateStats();
+}
+function showTyping(){
+  const el=document.getElementById('chatMessages');
+  const d=document.createElement('div');d.className='msg bot';d.id='typing';
+  d.innerHTML='<div class="msg-av">🤖</div><div class="bubble"><div class="typing"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div></div>';
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function hideTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+
+async function sendMessage(){
+  const inp=document.getElementById('chatInput');
+  const text=inp.value.trim();
+  if(!text||S.busy)return;
+  inp.value='';
+  document.getElementById('chips').style.display='none';
+  addMsg('user',text);
+  S.history.push({role:'user',content:text});
+  S.chats++;S.busy=true;
+  document.getElementById('sendBtn').disabled=true;
+  showTyping();
+  await new Promise(r=>setTimeout(r,1000));
+  addAct('💬',`User: "${text.substring(0,38)}${text.length>38?'...':''}"`, 'just now');
+  try{
+    const url = '/chat';
+
+    const res = await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:getSys(), messages:S.history})
+    });
+    const data = await res.json().catch(()=>({}));
+    hideTyping();
+    if(!res.ok){
+      addMsg('bot',`⚠️ Server error (${res.status}). Please open the backend endpoint /chat and try again.`);
+      S.busy=false;document.getElementById('sendBtn').disabled=false;
+      return;
+    }
+    const reply=data.reply||data.message||'Sorry, something went wrong.';
+    addMsg('bot',reply);
+    S.history.push({role:'assistant',content:reply});
+  }catch(e){hideTyping();addMsg('bot','⚠️ Connection issue. Please try again.');}
+  S.busy=false;document.getElementById('sendBtn').disabled=false;
+}
+function clearChat(){
+  if(!confirm('Clear chat history?'))return;
+  document.getElementById('chatMessages').innerHTML='';
+  S.history=[];S.msgs=0;
+  document.getElementById('chips').style.display='flex';
+  initWelcome();
+}
+function initWelcome(){
+  if(!document.getElementById('chatMessages').children.length)
+    addMsg('bot','👋 Hello! I\'m SalesZen, your AI-powered sales assistant.\n\nI help businesses find the perfect solution — from sales automation to AI chatbots and analytics.\n\nWhat brings you here today? 🚀');
+}
+
+function showLeadModal(){document.getElementById('leadModal').classList.add('show');}
+function closeModal(){document.getElementById('leadModal').classList.remove('show');}
+function saveLead(){
+  const n=document.getElementById('lname').value.trim();
+  const e=document.getElementById('lemail').value.trim();
+  if(!n||!e){toast('⚠️ Name and email required');return;}
+  S.leads.push({id:Date.now(),name:n,email:e,
+    phone:document.getElementById('lphone').value,
+    interest:document.getElementById('linterest').value,
+    status:document.getElementById('lstatus').value,
+    time:new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),
+    score:Math.floor(Math.random()*25)+75
+  });
+  document.getElementById('lname').value='';
+  document.getElementById('lemail').value='';
+  document.getElementById('lphone').value='';
+  closeModal();updateStats();updateTable();renderCards();
+  addAct('👥',`Lead: ${n}`,'just now');
+  toast(`✅ Lead "${n}" saved!`);
+}
+let curF='all';
+function setF(f,btn){curF=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCards();}
+function renderCards(){
+  const c=document.getElementById('lcards');
+  const q=document.getElementById('lsearch')?.value.toLowerCase()||'';
+  const fl=S.leads.filter(l=>(curF==='all'||l.status===curF)&&(!q||l.name.toLowerCase().includes(q)||l.email.toLowerCase().includes(q)||l.interest.toLowerCase().includes(q)));
+  if(!fl.length){c.innerHTML=`<div class="empty" style="grid-column:1/-1;"><div>👥</div><p>${S.leads.length?'No leads match filters.':'No leads yet.'}</p></div>`;return;}
+  c.innerHTML=fl.map(l=>`
+    <div class="lc">
+      <div class="lc-top"><div><div class="lc-name">${l.name}</div><div class="lc-email">${l.email}</div></div><span class="sbadge s-${l.status}">${l.status.charAt(0).toUpperCase()+l.status.slice(1)}</span></div>
+      <div class="lc-tags"><span class="tag">📌 ${l.interest}</span>${l.phone?`<span class="tag">📞 ${l.phone}</span>`:''}</div>
+      <div class="lc-foot"><span style="color:var(--text2);">Score: <span class="score-v">${l.score}/100</span></span><span style="color:var(--text3);">${l.time}</span></div>
+    </div>`).join('');
+}
+
+const acts=[];
+function addAct(icon,text,time){acts.unshift({icon,text,time});if(acts.length>7)acts.pop();
+  document.getElementById('actFeed').innerHTML=acts.map(a=>`<div class="ai"><div class="ai-ic">${a.icon}</div><div class="ai-tx"><strong>${a.text}</strong><p>Activity</p></div><div class="ai-tm">${a.time}</div></div>`).join('');
+}
+function updateStats(){
+  document.getElementById('s-chats').textContent=S.chats;
+  document.getElementById('s-leads').textContent=S.leads.length;
+  document.getElementById('s-chats-c').textContent=`↑ ${S.chats} sessions`;
+  document.getElementById('s-leads-c').textContent=`↑ ${S.leads.length} captured`;
+  document.getElementById('s-conv').textContent=(S.chats>0?Math.round(S.leads.length/S.chats*100):0)+'%';
+}
+function updateTable(){
+  const tb=document.getElementById('tbody');
+  document.getElementById('lcount').textContent=S.leads.length+' total';
+  if(!S.leads.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No leads yet.</td></tr>';return;}
+  tb.innerHTML=[...S.leads].reverse().slice(0,10).map(l=>`
+    <tr><td class="tn">${l.name}</td><td class="te">${l.email}</td><td>${l.interest}</td>
+    <td><span class="sbadge s-${l.status}">${l.status}</span></td>
+    <td style="color:var(--text3);font-size:.7rem;">${l.time}</td></tr>`).join('');
+}
+function refreshDash(){
+  updateStats();updateTable();
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],vals=[3,5,4,7,6,8,Math.max(S.chats,2)],mx=Math.max(...vals);
+  document.getElementById('barChart').innerHTML=days.map((d,i)=>`<div class="bw"><div class="bv">${vals[i]}</div><div class="bar" style="height:${Math.round(vals[i]/mx*100)}%;"></div><div class="bl">${d}</div></div>`).join('');
+  document.getElementById('intentBars').innerHTML=[{l:'Pricing Inquiry',p:65},{l:'Product Demo',p:48},{l:'Feature Question',p:35},{l:'Support Query',p:22}]
+    .map(i=>`<div><div class="ib-meta"><span>${i.l}</span><span>${i.p}%</span></div><div class="ib-track"><div class="ib-fill" style="width:${i.p}%"></div></div></div>`).join('');
+}
+function updateSetCounts(){document.getElementById('set-leads').textContent=S.leads.length;document.getElementById('set-msgs').textContent=S.msgs;}
+function saveSettings(){toast('✅ Settings saved!');}
+function exportLeads(){
+  if(!S.leads.length){toast('⚠️ No leads to export');return;}
+  const csv=['Name,Email,Phone,Interest,Status,Score,Time',...S.leads.map(l=>`"${l.name}","${l.email}","${l.phone||''}","${l.interest}","${l.status}","${l.score}","${l.time}"`)].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='saleszen-leads.csv';a.click();toast('✅ Exported!');
+}
+function clearAll(){
+  if(!confirm('Clear all data?'))return;
+  S.leads=[];S.history=[];S.msgs=0;S.chats=0;
+  document.getElementById('chatMessages').innerHTML='';
+  document.getElementById('chips').style.display='flex';
+  updateStats();updateTable();renderCards();updateSetCounts();initWelcome();toast('✅ Cleared');
+}
+</script>
+</body>
+</html>
